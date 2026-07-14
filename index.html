@@ -112,9 +112,8 @@
         </div>
     </div>
 
-    <script>
+<script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec"; 
-
         let records = []; 
         let projects = ["新建臺東縣太麻里綜合社會福利館工程", "東海國中興建多功能學生活動中心統包工程", "臺東分局豐里派出所拆除重建工程"];
         let chartInstance = null;
@@ -130,7 +129,7 @@
                     cloudProjects.forEach(p => { if (!projects.includes(p)) projects.push(p); });
                 }
             } catch (error) { console.error("載入失敗", error); }
-            finally { document.getElementById('init-loading').classList.add('hidden'); loadProjects(); }
+            finally { document.getElementById('init-loading').classList.remove('hidden'); loadProjects(); }
         }
 
         function loadProjects() {
@@ -150,9 +149,7 @@
                 let rec = filteredRecords[i];
                 let xa = Math.round((rec.x1 + rec.x2 + rec.x3) / 3);
                 let r = Math.max(rec.x1, rec.x2, rec.x3) - Math.min(rec.x1, rec.x2, rec.x3);
-                let avg3 = i >= 2 ? Math.round((xa + Math.round((filteredRecords[i-1].x1 + filteredRecords[i-1].x2 + filteredRecords[i-1].x3)/3) + Math.round((filteredRecords[i-2].x1 + filteredRecords[i-2].x2 + filteredRecords[i-2].x3)/3))/3) : "";
-                let r5 = i >= 4 ? Math.round((r + (Math.max(filteredRecords[i-1].x1,filteredRecords[i-1].x2,filteredRecords[i-1].x3)-Math.min(filteredRecords[i-1].x1,filteredRecords[i-1].x2,filteredRecords[i-1].x3)) + (Math.max(filteredRecords[i-2].x1,filteredRecords[i-2].x2,filteredRecords[i-2].x3)-Math.min(filteredRecords[i-2].x1,filteredRecords[i-2].x2,filteredRecords[i-2].x3)) + (Math.max(filteredRecords[i-3].x1,filteredRecords[i-3].x2,filteredRecords[i-3].x3)-Math.min(filteredRecords[i-3].x1,filteredRecords[i-3].x2,filteredRecords[i-3].x3)) + (Math.max(filteredRecords[i-4].x1,filteredRecords[i-4].x2,filteredRecords[i-4].x3)-Math.min(filteredRecords[i-4].x1,filteredRecords[i-4].x2,filteredRecords[i-4].x3)))/5) : "";
-                processed.push({ ...rec, displayId: i + 1, xa, avg3, r, r5 });
+                processed.push({ ...rec, displayId: i + 1, xa, r });
             }
             return processed;
         }
@@ -163,7 +160,9 @@
             for (let i = 0; i < Math.max(data.length, 12); i++) {
                 if (i < data.length) {
                     let d = data[i];
-                    tbody.innerHTML += `<tr><td>${d.displayId}</td><td>${d.part}</td><td>${d.date}</td><td>${d.specimen}</td><td>${d.x1}</td><td>${d.x2}</td><td>${d.x3}</td><td class="val-xa">${d.xa}</td><td class="val-3avg">${d.avg3}</td><td>${d.r}</td><td class="val-r5">${d.r5}</td><td class="text-left">${d.failStr.split(';')[0]||''}</td><td class="text-left">${d.failStr.split(';')[1]||''}</td></tr>`;
+                    // 【日期修正】：使用 replace(/^0+/, '') 把前面的 0 去掉
+                    let cleanDate = String(d.date).replace(/^0+/, ''); 
+                    tbody.innerHTML += `<tr><td>${d.displayId}</td><td>${d.part}</td><td>${cleanDate}</td><td>${d.specimen}</td><td>${d.x1}</td><td>${d.x2}</td><td>${d.x3}</td><td class="val-xa">${d.xa}</td><td>-</td><td>${d.r}</td><td>-</td><td class="text-left">${d.failStr.split(';')[0]||''}</td></tr>`;
                 } else {
                     tbody.innerHTML += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
                 }
@@ -188,7 +187,10 @@
                         { label: "fc'", data: new Array(labels.length).fill(fc), borderColor: '#ec4899', borderWidth: 2, pointRadius: 0, fill: false }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { ticks: { stepSize: 15 } } } // 【Y軸修正】：強制間距為 15
+                }
             });
         }
 
@@ -198,7 +200,6 @@
             let fa = parseInt(document.getElementById('failA').value), fb = parseInt(document.getElementById('failB').value), fc = parseInt(document.getElementById('failC').value), fd = parseInt(document.getElementById('failD').value);
             if(!part || !date || isNaN(x1) || isNaN(x2) || isNaN(x3)) { alert("請完整填寫強度資料！"); return; }
             let failStr = `${fa>0?'A,'+fa+'顆 ':''}${fb>0?'B,'+fb+'顆 ':''}${fc>0?'C,'+fc+'顆 ':''}${fd>0?'D,'+fd+'顆 ':''}`;
-            // 這裡將 date 確保為字串送出
             let newData = { projName, date: String(date), part, specimen, x1, x2, x3, failA: fa, failB: fb, failC: fc, failD: fd, failStr };
             
             document.getElementById('submitBtn').disabled = true;
@@ -218,7 +219,6 @@
             let processed = processData();
             renderTable(processed);
             renderChart(processed);
-            document.getElementById('bug-warning').classList.toggle('hidden', processed.length >= 5 || processed.length === 0);
         }
 
         function exportToPDF() { window.print(); }
