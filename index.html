@@ -161,7 +161,7 @@
 
         // 網頁載入時，自動去 Google 試算表抓取歷史資料
         async function fetchInitialData() {
-            if (GAS_WEB_APP_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
+            if (GAS_WEB_APP_URL === "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec") {
                 loadProjects();
                 return;
             }
@@ -363,12 +363,20 @@
 
             try {
                 if (GAS_WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec") {
-                    await fetch(GAS_WEB_APP_URL, {
+                    // 🚀 關鍵修正：已經在 GitHub 上了，移除 no-cors，使用標準 POST 傳輸
+                    let response = await fetch(GAS_WEB_APP_URL, {
                         method: 'POST',
-                        mode: 'no-cors', 
-                        body: JSON.stringify(newData),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        body: JSON.stringify(newData)
                     });
+                    
+                    // 同時把錯誤雷達加回來，如果有錯能馬上看到！
+                    let result = await response.json();
+                    if (result.status === "error") {
+                        alert("Google 後端回報錯誤：\n" + result.message);
+                        document.getElementById('submitBtn').disabled = false;
+                        document.getElementById('loading').classList.add('hidden');
+                        return; // 中止執行
+                    }
                 }
                 
                 records.push(newData);
@@ -379,26 +387,11 @@
                 document.getElementById('x3').value = '';
 
             } catch (error) {
-                alert("傳送過程中發生異常。");
+                alert("傳送資料失敗，請檢查網路連線。");
                 console.error(error);
             } finally {
                 document.getElementById('submitBtn').disabled = false;
                 document.getElementById('loading').classList.add('hidden');
-            }
-        }
-
-        function updateUI() {
-            let currentProj = document.getElementById('projName').value;
-            document.getElementById('display-proj').innerText = currentProj || "未選擇專案";
-            
-            let processed = processData();
-            renderTable(processed);
-            renderChart(processed);
-
-            if (processed.length > 0 && processed.length < 5) {
-                document.getElementById('bug-warning').classList.remove('hidden');
-            } else {
-                document.getElementById('bug-warning').classList.add('hidden');
             }
         }
 
