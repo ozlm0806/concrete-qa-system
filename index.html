@@ -198,7 +198,7 @@ function processData() {
             }
         }
 
-        function renderChart(data) {
+function renderChart(data) {
             const ctx = document.getElementById('controlChart').getContext('2d');
             let fc = parseInt(document.getElementById('fc').value) || 280;
             let fcr = parseInt(document.getElementById('fcr').value) || 365;
@@ -217,8 +217,18 @@ function processData() {
                     ]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { ticks: { stepSize: 15 } } } // 【Y軸修正】：強制間距為 15
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            // 強制從 fc 數值附近開始，並確保顯示間距為 15
+                            min: fc - 10, 
+                            ticks: { 
+                                stepSize: 15, // 👉 強制間隔 15
+                                callback: function(value) { return value; } // 顯示所有刻度值
+                            } 
+                        } 
+                    } 
                 }
             });
         }
