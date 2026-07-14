@@ -363,21 +363,31 @@
 
             try {
                 if (GAS_WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec") {
-                    // 🚀 關鍵修正：已經在 GitHub 上了，移除 no-cors，使用標準 POST 傳輸
-                    let response = await fetch(GAS_WEB_APP_URL, {
+                    // 🚀 最終修正：加回 no-cors，並且「絕對不能」解析 response.json()
+                    await fetch(GAS_WEB_APP_URL, {
                         method: 'POST',
+                        mode: 'no-cors', // 強制突破瀏覽器封鎖
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 偽裝成簡單文字請求
                         body: JSON.stringify(newData)
                     });
-                    
-                    // 同時把錯誤雷達加回來，如果有錯能馬上看到！
-                    let result = await response.json();
-                    if (result.status === "error") {
-                        alert("Google 後端回報錯誤：\n" + result.message);
-                        document.getElementById('submitBtn').disabled = false;
-                        document.getElementById('loading').classList.add('hidden');
-                        return; // 中止執行
-                    }
                 }
+                
+                // 因為 no-cors 模式下無法讀取 Google 的回傳結果，我們直接假設傳送成功並更新畫面
+                records.push(newData);
+                updateUI();
+                
+                // 清空輸入框
+                document.getElementById('x1').value = '';
+                document.getElementById('x2').value = '';
+                document.getElementById('x3').value = '';
+
+            } catch (error) {
+                alert("傳送資料失敗，請檢查網路連線。");
+                console.error(error);
+            } finally {
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('loading').classList.add('hidden');
+            }
                 
                 records.push(newData);
                 updateUI();
