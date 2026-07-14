@@ -114,6 +114,7 @@
 
     <script>
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec"; 
+
         let records = []; 
         let projects = ["新建臺東縣太麻里綜合社會福利館工程", "東海國中興建多功能學生活動中心統包工程", "臺東分局豐里派出所拆除重建工程"];
         let chartInstance = null;
@@ -139,15 +140,6 @@
                 let opt = document.createElement('option'); opt.value = p; opt.innerText = p; select.appendChild(opt);
             });
             updateUI(); 
-        }
-
-        function addNewProject() {
-            let newProj = prompt("請輸入新的工程專案名稱：");
-            if (newProj && newProj.trim() !== "") {
-                let cleanName = newProj.trim();
-                if (!projects.includes(cleanName)) { projects.push(cleanName); loadProjects(); }
-                document.getElementById('projName').value = cleanName; updateUI();
-            }
         }
 
         function processData() {
@@ -180,10 +172,22 @@
 
         function renderChart(data) {
             const ctx = document.getElementById('controlChart').getContext('2d');
+            let fc = parseInt(document.getElementById('fc').value) || 280;
+            let fcr = parseInt(document.getElementById('fcr').value) || 365;
+            let labels = data.length > 0 ? data.map(d => d.displayId) : [1,2,3,4,5];
+            let xaData = data.map(d => d.xa);
+
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
-                data: { labels: data.map(d => d.displayId).length > 0 ? data.map(d => d.displayId) : [1,2,3,4,5], datasets: [{ label: '平均強度 (Xa)', data: data.map(d => d.xa), borderColor: '#3b82f6', borderWidth: 2, pointRadius: 5, fill: false }] },
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '平均強度 (Xa)', data: xaData, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 5, fill: false },
+                        { label: "fcr'", data: new Array(labels.length).fill(fcr), borderColor: '#84cc16', borderDash: [5, 5], pointRadius: 0, fill: false },
+                        { label: "fc'", data: new Array(labels.length).fill(fc), borderColor: '#ec4899', borderWidth: 2, pointRadius: 0, fill: false }
+                    ]
+                },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
@@ -194,7 +198,8 @@
             let fa = parseInt(document.getElementById('failA').value), fb = parseInt(document.getElementById('failB').value), fc = parseInt(document.getElementById('failC').value), fd = parseInt(document.getElementById('failD').value);
             if(!part || !date || isNaN(x1) || isNaN(x2) || isNaN(x3)) { alert("請完整填寫強度資料！"); return; }
             let failStr = `${fa>0?'A,'+fa+'顆 ':''}${fb>0?'B,'+fb+'顆 ':''}${fc>0?'C,'+fc+'顆 ':''}${fd>0?'D,'+fd+'顆 ':''}`;
-            let newData = { projName, date, part, specimen, x1, x2, x3, failA: fa, failB: fb, failC: fc, failD: fd, failStr };
+            // 這裡將 date 確保為字串送出
+            let newData = { projName, date: String(date), part, specimen, x1, x2, x3, failA: fa, failB: fb, failC: fc, failD: fd, failStr };
             
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('loading').classList.remove('hidden');
