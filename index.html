@@ -22,8 +22,6 @@
         .val-3avg { color: #db2777; font-weight: bold; } 
         .val-r5 { color: #16a34a; font-weight: bold; } 
         .header-bg { background-color: #1e3a8a; }
-        
-        /* 載入動畫 */
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3b82f6;
@@ -40,14 +38,12 @@
 </head>
 <body class="p-6 max-w-7xl mx-auto">
 
-    <!-- Header Section -->
     <div class="header-bg text-white p-4 rounded-t-lg shadow-md flex justify-between items-center print:bg-white print:text-black print:border-b-2 print:border-gray-800">
         <div>
             <h1 class="text-2xl font-bold">工程品質管制系統 V5.0</h1>
             <p class="text-sm opacity-80 print:text-black">混凝土強度管制網頁版 (R5 差距變動平均法)</p>
         </div>
         <div class="no-print flex items-center space-x-2">
-            <!-- 頂部載入狀態指示器 -->
             <div id="init-loading" class="hidden flex items-center bg-blue-800 px-3 py-1 rounded text-sm">
                 <div class="loader" style="width: 16px; height: 16px; border-width: 2px;"></div>
                 <span class="ml-2">同步雲端資料中...</span>
@@ -58,19 +54,14 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="bg-white p-6 shadow-md rounded-b-lg border border-t-0 border-gray-200">
-        
-        <!-- Input Form (Hidden on Print) -->
         <div class="no-print mb-8 p-4 bg-gray-50 rounded border border-gray-200">
             <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">新增試驗紀錄</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-semibold mb-1">專案名稱</label>
                     <div class="flex space-x-2">
-                        <select id="projName" onchange="updateUI()" class="w-full border p-2 rounded">
-                            <!-- 選單將由 JS 自動載入 -->
-                        </select>
+                        <select id="projName" onchange="updateUI()" class="w-full border p-2 rounded"></select>
                         <button onclick="addNewProject()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 font-bold transition text-xl" title="新增專案">+</button>
                     </div>
                 </div>
@@ -100,102 +91,52 @@
             </div>
         </div>
 
-        <!-- Print Header info -->
         <div class="text-center mb-4">
             <h2 class="text-xl font-bold italic border-b border-gray-400 inline-block pb-1 mb-2">工程名稱：<span id="display-proj"></span></h2>
             <h3 class="text-lg tracking-widest font-semibold">混凝土強度管制圖</h3>
         </div>
 
-        <!-- Chart Section -->
-        <div id="chart-container" class="mb-8 w-full">
-            <canvas id="controlChart"></canvas>
-        </div>
+        <div id="chart-container" class="mb-8 w-full"><canvas id="controlChart"></canvas></div>
 
-        <!-- Data Table Section -->
         <div class="overflow-x-auto">
             <table class="w-full data-table text-sm">
                 <thead>
                     <tr>
-                        <th rowspan="2" class="w-10">編<br>號</th>
-                        <th rowspan="2">結構<br>部位</th>
-                        <th rowspan="2">取樣<br>日期</th>
-                        <th rowspan="2">試體<br>編號</th>
-                        <th colspan="3">抗壓強度(kg/cm²)</th>
-                        <th>平均強度</th>
-                        <th>強度變動<br>平均值</th>
-                        <th>全距</th>
-                        <th>差距變動<br>平均值</th>
-                        <th rowspan="2" colspan="2">破壞型態</th>
+                        <th rowspan="2">編號</th><th rowspan="2">結構部位</th><th rowspan="2">取樣日期</th><th rowspan="2">試體編號</th>
+                        <th colspan="3">抗壓強度(kg/cm²)</th><th>平均強度</th><th>強度變動平均值</th><th>全距</th><th>差距變動平均值</th><th rowspan="2" colspan="2">破壞型態</th>
                     </tr>
-                    <tr>
-                        <th>X1</th>
-                        <th>X2</th>
-                        <th>X3</th>
-                        <th>Xa</th>
-                        <th>∑(3 Xa)/3</th>
-                        <th>R</th>
-                        <th>R5</th>
-                    </tr>
+                    <tr><th>X1</th><th>X2</th><th>X3</th><th>Xa</th><th>∑(3 Xa)/3</th><th>R</th><th>R5</th></tr>
                 </thead>
-                <tbody id="table-body">
-                    <!-- Data rows will go here -->
-                </tbody>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
-
     </div>
 
     <script>
-        // ==========================================
-        // 🚨 記得換成您最新的 Google Apps Script 網址 🚨
-        // ==========================================
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec"; 
-
         let records = []; 
-        let projects = [
-            "新建臺東縣太麻里綜合社會福利館工程", 
-            "東海國中興建多功能學生活動中心統包工程", 
-            "臺東分局豐里派出所拆除重建工程"
-        ];
+        let projects = ["新建臺東縣太麻里綜合社會福利館工程", "東海國中興建多功能學生活動中心統包工程", "臺東分局豐里派出所拆除重建工程"];
         let chartInstance = null;
 
-        // 網頁載入時，自動去 Google 試算表抓取歷史資料
         async function fetchInitialData() {
-            if (GAS_WEB_APP_URL === "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec") {
-                loadProjects();
-                return;
-            }
-            
             document.getElementById('init-loading').classList.remove('hidden');
             try {
                 let response = await fetch(GAS_WEB_APP_URL);
                 let data = await response.json();
-                
                 if (data && data.length > 0) {
-                    records = data; // 將雲端資料覆蓋本地端
-                    
-                    // 自動把試算表裡的新專案名稱加進下拉選單
+                    records = data;
                     let cloudProjects = [...new Set(records.map(r => r.projName))];
-                    cloudProjects.forEach(p => {
-                        if (!projects.includes(p)) projects.push(p);
-                    });
+                    cloudProjects.forEach(p => { if (!projects.includes(p)) projects.push(p); });
                 }
-            } catch (error) {
-                console.error("載入雲端資料失敗，請檢查網路連線", error);
-            } finally {
-                document.getElementById('init-loading').classList.add('hidden');
-                loadProjects(); // 資料抓完後，重新載入選單並更新畫面
-            }
+            } catch (error) { console.error("載入失敗", error); }
+            finally { document.getElementById('init-loading').classList.add('hidden'); loadProjects(); }
         }
 
         function loadProjects() {
             const select = document.getElementById('projName');
             select.innerHTML = '';
             projects.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p;
-                opt.innerText = p;
-                select.appendChild(opt);
+                let opt = document.createElement('option'); opt.value = p; opt.innerText = p; select.appendChild(opt);
             });
             updateUI(); 
         }
@@ -204,12 +145,8 @@
             let newProj = prompt("請輸入新的工程專案名稱：");
             if (newProj && newProj.trim() !== "") {
                 let cleanName = newProj.trim();
-                if (!projects.includes(cleanName)) {
-                    projects.push(cleanName);
-                    loadProjects(); 
-                }
-                document.getElementById('projName').value = cleanName; 
-                updateUI();
+                if (!projects.includes(cleanName)) { projects.push(cleanName); loadProjects(); }
+                document.getElementById('projName').value = cleanName; updateUI();
             }
         }
 
@@ -217,28 +154,12 @@
             let currentProj = document.getElementById('projName').value;
             let filteredRecords = records.filter(r => r.projName === currentProj);
             let processed = [];
-            
             for (let i = 0; i < filteredRecords.length; i++) {
                 let rec = filteredRecords[i];
                 let xa = Math.round((rec.x1 + rec.x2 + rec.x3) / 3);
                 let r = Math.max(rec.x1, rec.x2, rec.x3) - Math.min(rec.x1, rec.x2, rec.x3);
-                
-                let avg3 = "";
-                if (i >= 2) {
-                    let prev1 = Math.round((filteredRecords[i-1].x1 + filteredRecords[i-1].x2 + filteredRecords[i-1].x3) / 3);
-                    let prev2 = Math.round((filteredRecords[i-2].x1 + filteredRecords[i-2].x2 + filteredRecords[i-2].x3) / 3);
-                    avg3 = Math.round((xa + prev1 + prev2) / 3);
-                }
-
-                let r5 = "";
-                if (i >= 4) {
-                    let r_sum = r;
-                    for (let j = 1; j <= 4; j++) {
-                        let tempX = [filteredRecords[i-j].x1, filteredRecords[i-j].x2, filteredRecords[i-j].x3];
-                        r_sum += Math.max(...tempX) - Math.min(...tempX);
-                    }
-                    r5 = Math.round(r_sum / 5);
-                }
+                let avg3 = i >= 2 ? Math.round((xa + Math.round((filteredRecords[i-1].x1 + filteredRecords[i-1].x2 + filteredRecords[i-1].x3)/3) + Math.round((filteredRecords[i-2].x1 + filteredRecords[i-2].x2 + filteredRecords[i-2].x3)/3))/3) : "";
+                let r5 = i >= 4 ? Math.round((r + (Math.max(filteredRecords[i-1].x1,filteredRecords[i-1].x2,filteredRecords[i-1].x3)-Math.min(filteredRecords[i-1].x1,filteredRecords[i-1].x2,filteredRecords[i-1].x3)) + (Math.max(filteredRecords[i-2].x1,filteredRecords[i-2].x2,filteredRecords[i-2].x3)-Math.min(filteredRecords[i-2].x1,filteredRecords[i-2].x2,filteredRecords[i-2].x3)) + (Math.max(filteredRecords[i-3].x1,filteredRecords[i-3].x2,filteredRecords[i-3].x3)-Math.min(filteredRecords[i-3].x1,filteredRecords[i-3].x2,filteredRecords[i-3].x3)) + (Math.max(filteredRecords[i-4].x1,filteredRecords[i-4].x2,filteredRecords[i-4].x3)-Math.min(filteredRecords[i-4].x1,filteredRecords[i-4].x2,filteredRecords[i-4].x3)))/5) : "";
                 processed.push({ ...rec, displayId: i + 1, xa, avg3, r, r5 });
             }
             return processed;
@@ -247,32 +168,10 @@
         function renderTable(data) {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
-            const rowsToRender = Math.max(data.length, 12); 
-
-            for (let i = 0; i < rowsToRender; i++) {
+            for (let i = 0; i < Math.max(data.length, 12); i++) {
                 if (i < data.length) {
                     let d = data[i];
-                    let failParts = d.failStr.split(';');
-                    let f1 = failParts[0] || '';
-                    let f2 = failParts[1] || '';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${d.displayId}</td>
-                            <td>${d.part}</td>
-                            <td>${d.date}</td>
-                            <td>${d.specimen}</td>
-                            <td>${d.x1}</td>
-                            <td>${d.x2}</td>
-                            <td>${d.x3}</td>
-                            <td class="val-xa">${d.xa}</td>
-                            <td class="val-3avg">${d.avg3}</td>
-                            <td>${d.r}</td>
-                            <td class="val-r5">${d.r5}</td>
-                            <td class="text-left">${f1}</td>
-                            <td class="text-left">${f2}</td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr><td>${d.displayId}</td><td>${d.part}</td><td>${d.date}</td><td>${d.specimen}</td><td>${d.x1}</td><td>${d.x2}</td><td>${d.x3}</td><td class="val-xa">${d.xa}</td><td class="val-3avg">${d.avg3}</td><td>${d.r}</td><td class="val-r5">${d.r5}</td><td class="text-left">${d.failStr.split(';')[0]||''}</td><td class="text-left">${d.failStr.split(';')[1]||''}</td></tr>`;
                 } else {
                     tbody.innerHTML += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
                 }
@@ -281,135 +180,43 @@
 
         function renderChart(data) {
             const ctx = document.getElementById('controlChart').getContext('2d');
-            let labels = data.map(d => d.displayId);
-            let xaData = data.map(d => d.xa);
-            
-            let fcValue = parseInt(document.getElementById('fc').value) || 280;
-            let fcrValue = parseInt(document.getElementById('fcr').value) || 365;
-            
-            let fcLine = new Array(Math.max(data.length, 5)).fill(fcValue);
-            let fcrLine = new Array(Math.max(data.length, 5)).fill(fcrValue);
-            let lowerLine = new Array(Math.max(data.length, 5)).fill(fcValue - 15);
-            
-            if(labels.length === 0) {
-                labels = [1, 2, 3, 4, 5];
-            }
-
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '平均強度 (Xa)', data: xaData,
-                            borderColor: '#3b82f6', backgroundColor: '#3b82f6',
-                            borderWidth: 2, pointStyle: 'rectRot', pointRadius: 5, fill: false, tension: 0
-                        },
-                        { label: "fcr'", data: fcrLine, borderColor: '#84cc16', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false },
-                        { label: "fc'", data: fcLine, borderColor: '#ec4899', borderWidth: 2, pointRadius: 0, fill: false },
-                        { label: "fc' 容許下限", data: lowerLine, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            min: fcValue - 30, 
-                            max: xaData.length > 0 ? Math.max(...xaData, fcrValue) + 30 : fcrValue + 30, 
-                            ticks: { stepSize: 15 } 
-                        },
-                        x: { title: { display: true, text: '平均強度(Xa)', font: { size: 16 } } }
-                    }
-                }
+                data: { labels: data.map(d => d.displayId).length > 0 ? data.map(d => d.displayId) : [1,2,3,4,5], datasets: [{ label: '平均強度 (Xa)', data: data.map(d => d.xa), borderColor: '#3b82f6', borderWidth: 2, pointRadius: 5, fill: false }] },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         async function addData() {
-            let projName = document.getElementById('projName').value;
-            let part = document.getElementById('part').value;
-            let date = document.getElementById('date').value;
-            let specimen = document.getElementById('specimen').value;
-            let x1 = parseInt(document.getElementById('x1').value);
-            let x2 = parseInt(document.getElementById('x2').value);
-            let x3 = parseInt(document.getElementById('x3').value);
+            let projName = document.getElementById('projName').value, part = document.getElementById('part').value, date = document.getElementById('date').value, specimen = document.getElementById('specimen').value;
+            let x1 = parseInt(document.getElementById('x1').value), x2 = parseInt(document.getElementById('x2').value), x3 = parseInt(document.getElementById('x3').value);
+            let fa = parseInt(document.getElementById('failA').value), fb = parseInt(document.getElementById('failB').value), fc = parseInt(document.getElementById('failC').value), fd = parseInt(document.getElementById('failD').value);
+            if(!part || !date || isNaN(x1) || isNaN(x2) || isNaN(x3)) { alert("請完整填寫強度資料！"); return; }
+            let failStr = `${fa>0?'A,'+fa+'顆 ':''}${fb>0?'B,'+fb+'顆 ':''}${fc>0?'C,'+fc+'顆 ':''}${fd>0?'D,'+fd+'顆 ':''}`;
+            let newData = { projName, date, part, specimen, x1, x2, x3, failA: fa, failB: fb, failC: fc, failD: fd, failStr };
             
-            let fa = parseInt(document.getElementById('failA').value);
-            let fb = parseInt(document.getElementById('failB').value);
-            let fc = parseInt(document.getElementById('failC').value);
-            let fd = parseInt(document.getElementById('failD').value);
-
-            if(!part || !date || isNaN(x1) || isNaN(x2) || isNaN(x3)) {
-                alert("請完整填寫強度資料！");
-                return;
-            }
-
-            let failArr = [];
-            if(fa > 0) failArr.push(`A,${fa}顆`);
-            if(fb > 0) failArr.push(`B,${fb}顆`);
-            if(fc > 0) failArr.push(`C,${fc}顆`);
-            if(fd > 0) failArr.push(`D,${fd}顆`);
-            let failStr = failArr.join(' ; ');
-
-            let newData = {
-                projName: projName, date: date, part: part, specimen: specimen,
-                x1: x1, x2: x2, x3: x3, failA: fa, failB: fb, failC: fc, failD: fd, failStr: failStr
-            };
-
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('loading').classList.remove('hidden');
-
             try {
-                if (GAS_WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbw9jyuXvYtc844ZX3zKboOHrkb9KXpXYOc4G6XWVTf9xyCoK4FpBMl6jkFFtdFPuNqb/exec") {
-                    // 🚀 最終修正：加回 no-cors，並且「絕對不能」解析 response.json()
-                    await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // 強制突破瀏覽器封鎖
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 偽裝成簡單文字請求
-                        body: JSON.stringify(newData)
-                    });
-                }
-                
-                // 因為 no-cors 模式下無法讀取 Google 的回傳結果，我們直接假設傳送成功並更新畫面
+                await fetch(GAS_WEB_APP_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(newData) });
                 records.push(newData);
                 updateUI();
-                
-                // 清空輸入框
-                document.getElementById('x1').value = '';
-                document.getElementById('x2').value = '';
-                document.getElementById('x3').value = '';
-
-            } catch (error) {
-                alert("傳送資料失敗，請檢查網路連線。");
-                console.error(error);
-            } finally {
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('loading').classList.add('hidden');
-            }
-                
-                records.push(newData);
-                updateUI();
-                
-                document.getElementById('x1').value = '';
-                document.getElementById('x2').value = '';
-                document.getElementById('x3').value = '';
-
-            } catch (error) {
-                alert("傳送資料失敗，請檢查網路連線。");
-                console.error(error);
-            } finally {
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('loading').classList.add('hidden');
-            }
+                document.getElementById('x1').value = ''; document.getElementById('x2').value = ''; document.getElementById('x3').value = '';
+            } catch (error) { alert("傳送失敗"); }
+            finally { document.getElementById('submitBtn').disabled = false; document.getElementById('loading').classList.add('hidden'); }
         }
 
-        function exportToPDF() {
-            window.print();
+        function updateUI() {
+            let currentProj = document.getElementById('projName').value;
+            document.getElementById('display-proj').innerText = currentProj || "未選擇專案";
+            let processed = processData();
+            renderTable(processed);
+            renderChart(processed);
+            document.getElementById('bug-warning').classList.toggle('hidden', processed.length >= 5 || processed.length === 0);
         }
 
-        // 開機啟動：一開啟網頁就去抓取雲端資料
+        function exportToPDF() { window.print(); }
         fetchInitialData(); 
     </script>
 </body>
