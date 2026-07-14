@@ -141,15 +141,36 @@
             updateUI(); 
         }
 
-        function processData() {
+function processData() {
             let currentProj = document.getElementById('projName').value;
             let filteredRecords = records.filter(r => r.projName === currentProj);
             let processed = [];
+            
             for (let i = 0; i < filteredRecords.length; i++) {
                 let rec = filteredRecords[i];
                 let xa = Math.round((rec.x1 + rec.x2 + rec.x3) / 3);
                 let r = Math.max(rec.x1, rec.x2, rec.x3) - Math.min(rec.x1, rec.x2, rec.x3);
-                processed.push({ ...rec, displayId: i + 1, xa, r });
+                
+                // 計算「強度變動平均值」：當前 3 組的平均 (從第 3 組開始計算)
+                let avg3 = "";
+                if (i >= 2) {
+                    let prev1 = Math.round((filteredRecords[i-1].x1 + filteredRecords[i-1].x2 + filteredRecords[i-1].x3) / 3);
+                    let prev2 = Math.round((filteredRecords[i-2].x1 + filteredRecords[i-2].x2 + filteredRecords[i-2].x3) / 3);
+                    avg3 = Math.round((xa + prev1 + prev2) / 3);
+                }
+
+                // 計算「差距變動平均值 (R5)」：當前與前 4 組 R 的平均 (從第 5 組開始計算)
+                let r5 = "";
+                if (i >= 4) {
+                    let rSum = r;
+                    for (let j = 1; j <= 4; j++) {
+                        let prevRec = filteredRecords[i-j];
+                        rSum += (Math.max(prevRec.x1, prevRec.x2, prevRec.x3) - Math.min(prevRec.x1, prevRec.x2, prevRec.x3));
+                    }
+                    r5 = Math.round(rSum / 5);
+                }
+
+                processed.push({ ...rec, displayId: i + 1, xa, avg3, r, r5 });
             }
             return processed;
         }
@@ -160,11 +181,19 @@
             for (let i = 0; i < Math.max(data.length, 12); i++) {
                 if (i < data.length) {
                     let d = data[i];
-                    // 【日期修正】：使用 replace(/^0+/, '') 把前面的 0 去掉
                     let cleanDate = String(d.date).replace(/^0+/, ''); 
-                    tbody.innerHTML += `<tr><td>${d.displayId}</td><td>${d.part}</td><td>${cleanDate}</td><td>${d.specimen}</td><td>${d.x1}</td><td>${d.x2}</td><td>${d.x3}</td><td class="val-xa">${d.xa}</td><td>-</td><td>${d.r}</td><td>-</td><td class="text-left">${d.failStr.split(';')[0]||''}</td></tr>`;
+                    // 將計算出的 avg3 與 r5 補回表格顯示
+                    tbody.innerHTML += `<tr>
+                        <td>${d.displayId}</td><td>${d.part}</td><td>${cleanDate}</td><td>${d.specimen}</td>
+                        <td>${d.x1}</td><td>${d.x2}</td><td>${d.x3}</td>
+                        <td class="val-xa">${d.xa}</td>
+                        <td class="val-3avg">${d.avg3}</td>
+                        <td>${d.r}</td>
+                        <td class="val-r5">${d.r5}</td>
+                        <td class="text-left">${d.failStr.split(';')[0]||''}</td>
+                    </tr>`;
                 } else {
-                    tbody.innerHTML += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
                 }
             }
         }
