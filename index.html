@@ -220,17 +220,17 @@ function renderChart(data) {
                         { label: "fc'", data: new Array(labels.length).fill(fc), borderColor: '#ec4899', borderWidth: 2, pointRadius: 0, fill: false }
                     ]
                 },
-                options: { 
+                    options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
                     scales: { 
                         y: { 
                             beginAtZero: false,
-                            // 動態計算起始點：將 fc 往下取 15 的倍數，確保刻度永遠是 15 的倍數 (例如 fc=280，起點就會是 270)
                             min: Math.floor(fc / 15) * 15 - 15, 
                             ticks: { 
                                 stepSize: 15, 
-                                precision: 0 // 強制不顯示小數點，確保刻度精準
+                                precision: 0,
+                                autoSkip: false // 👈 關鍵：強制關閉自動跳號，顯示每一格刻度
                             },
                             grid: {
                                 drawTicks: true
