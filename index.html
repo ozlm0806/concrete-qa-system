@@ -220,7 +220,12 @@
             for (let i = 0; i < Math.max(data.length, 12); i++) {
                 if (i < data.length) {
                     let d = data[i];
-                    let cleanDate = String(d.date).replace(/^0+/, ''); 
+                    // 將日期物件轉換為 YYYY/MM/DD 格式，同時處理可能存在的 UTC 時區偏移
+            let dateObj = new Date(d.date);
+            let yyyy = dateObj.getFullYear();
+            let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let dd = String(dateObj.getDate()).padStart(2, '0');
+            let cleanDate = yyyy + '/' + mm + '/' + dd; 
                     tbody.innerHTML += `<tr class="hover:bg-gray-50 transition">
                         <td class="font-bold text-gray-700">${d.displayId}</td><td class="font-bold">${d.part}</td><td>${cleanDate}</td><td>${d.specimen}</td>
                         <td class="bg-gray-50 font-mono">${d.x1}</td><td class="bg-gray-50 font-mono">${d.x2}</td><td class="bg-gray-50 font-mono">${d.x3}</td>
