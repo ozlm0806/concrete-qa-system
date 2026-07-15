@@ -43,11 +43,15 @@
             <h1 class="text-2xl font-bold">工程品質管制系統 V5.0</h1>
             <p class="text-sm opacity-80 print:text-black">混凝土強度管制網頁版 (R5 差距變動平均法)</p>
         </div>
-        <div class="no-print flex items-center space-x-2">
+            <div class="no-print flex items-center space-x-2">
             <div id="init-loading" class="hidden flex items-center bg-blue-800 px-3 py-1 rounded text-sm">
                 <div class="loader" style="width: 16px; height: 16px; border-width: 2px;"></div>
                 <span class="ml-2">同步雲端資料中...</span>
             </div>
+            <!-- 新增的按鈕：點擊後會開啟新分頁前往檢試驗紀錄系統 -->
+            <button onclick="window.open('https://script.google.com/macros/s/AKfycbwku-9yEZkhHCzdoKlyF_G5TRq24z5zsQcM80afPbVP8i1Ig9WU3bWStEAD1OvD9My-Kg/exec', '_blank')" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700 transition">
+                材料檢試驗紀錄
+            </button>
             <button onclick="exportToPDF()" class="bg-white text-blue-900 px-4 py-2 rounded shadow font-semibold hover:bg-blue-50 transition">
                 匯出 A4 管制圖 (PDF)
             </button>
@@ -221,12 +225,16 @@ function renderChart(data) {
                     maintainAspectRatio: false,
                     scales: { 
                         y: { 
-                            // 強制從 fc 數值附近開始，並確保顯示間距為 15
-                            min: fc - 10, 
+                            beginAtZero: false,
+                            // 動態計算起始點：將 fc 往下取 15 的倍數，確保刻度永遠是 15 的倍數 (例如 fc=280，起點就會是 270)
+                            min: Math.floor(fc / 15) * 15 - 15, 
                             ticks: { 
-                                stepSize: 15, // 👉 強制間隔 15
-                                callback: function(value) { return value; } // 顯示所有刻度值
-                            } 
+                                stepSize: 15, 
+                                precision: 0 // 強制不顯示小數點，確保刻度精準
+                            },
+                            grid: {
+                                drawTicks: true
+                            }
                         } 
                     } 
                 }
