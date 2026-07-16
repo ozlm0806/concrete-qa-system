@@ -7,15 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* 列印專屬設定 */
         @media print {
             @page { size: A4 portrait; margin: 1cm; }
             body { font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            .page-break { page-break-before: always; }
-            /* 修正匯出邊界問題：增加 max-width 與 overflow 限制 */
-            #chart-container { width: 100% !important; max-width: 100% !important; height: auto !important; max-height: 400px; overflow: hidden; }
+            
+            /* 修正跑到第二頁與超出邊界的問題 */
+            #chart-container { 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                height: 320px !important; /* 強制縮小列印時的圖表高度，讓表格能塞進同一頁 */
+                max-height: 320px !important; 
+                overflow: hidden !important; 
+                page-break-inside: avoid;
+                margin-bottom: 15px !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: 100% !important;
+            }
+            /* 列印時稍微縮小表格內距，避免擁擠 */
+            .data-table th, .data-table td { padding: 4px 2px !important; font-size: 9pt !important; }
         }
+        
+        /* 螢幕顯示設定 */
         body { font-family: 'Helvetica Neue', '微軟正黑體', sans-serif; background-color: #f4f6f9; }
         .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; }
         .data-table th { background-color: #e2e8f0; font-weight: bold; }
@@ -249,9 +266,9 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
-                    // 修正匯出邊界問題：設定圖表邊界 Padding
                     layout: {
-                        padding: { left: 10, right: 20 }
+                        // 修正邊界：在右側增加 padding 防止最後一個點出界，讓圖表內縮
+                        padding: { left: 10, right: 30, top: 10, bottom: 10 }
                     },
                     plugins: { legend: { labels: { font: { weight: 'bold', size: 14 } } } },
                     scales: { 
@@ -267,9 +284,9 @@
                             grid: { drawTicks: true, color: '#e5e7eb' }
                         },
                         x: {
-                            // 修正匯出邊界問題：優化 X 軸標籤顯示
                             ticks: { 
                                 font: { weight: 'bold', size: 12 },
+                                // X 軸緊密控制：自動跳過擁擠標籤並保持水平
                                 autoSkip: true,
                                 maxRotation: 0,
                                 minRotation: 0
@@ -293,7 +310,19 @@
             renderChart(processed);
         }
 
-        function exportToPDF() { window.print(); }
+        // 修正匯出加入專案名稱
+        function exportToPDF() { 
+            let currentProj = document.getElementById('projName').value || "未選擇專案";
+            let originalTitle = document.title;
+            
+            // 暫存修改網頁標題，讓瀏覽器列印對話框抓取這個檔名
+            document.title = currentProj + "_混凝土強度管制圖";
+            
+            window.print(); 
+            
+            // 列印對話框結束後恢復原標題
+            setTimeout(() => { document.title = originalTitle; }, 1000);
+        }
         
         // 程式啟動
         fetchInitialData(); 
